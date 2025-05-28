@@ -114,14 +114,8 @@ val dfTaxisBoroughs = dfWithDO
 
 //Lo de antes no esta bien; es lo siguiente
 
-val dfTaxisWithBoroughs = dfTaxis
-  .join(dfZones.withColumnRenamed("LocationID", "PULocationID_zone")
-               .withColumnRenamed("borough", "PUborough"),
-        dfTaxis("PULocationID") === col("PULocationID_zone"), "inner")
-  .join(dfZones.withColumnRenamed("LocationID", "DOLocationID_zone")
-               .withColumnRenamed("borough", "DOborough"),
-        col("DOLocationID") === col("DOLocationID_zone"), "inner")
-  .drop("PULocationID_zone", "DOLocationID_zone") // elimina columnas extra
+val dfTaxisWithBoroughs = dfTaxis.join(dfZones.withColumnRenamed("LocationID", "PULocationID_zone").withColumnRenamed("borough", "PUborough"),dfTaxis("PULocationID") === col("PULocationID_zone"), "inner").join(dfZones.withColumnRenamed("LocationID", "DOLocationID_zone").withColumnRenamed("borough", "DOborough"),col("DOLocationID") === col("DOLocationID_zone"), "inner").drop("PULocationID_zone", "DOLocationID_zone") // elimina columnas extra
+
 
 
 //Verificar
@@ -140,10 +134,7 @@ val calculateTime = udf((start: Long, end: Long) => (end - start) / 1000000000L)
 
 
 // Aplicar transformaciones del paso 6
-val dfFinal = dfTaxisWithBoroughs.withColumn("pickup_ns", col("tpep_pickup_datetime").cast("long") * 1000000000L).withColumn("dropoff_ns", col("tpep_dropoff_datetime").cast("long") * 1000000000L).withColumn("ride_time", calculateTime(col("pickup_ns"), col("dropoff_ns")))
-  .withColumn("Airport_charge", when(col("Airport_fee").isNull, lit(0)).otherwise(col("Airport_fee")))
-  .filter(col("total_amount") > 0)
-  .drop("pickup_ns", "dropoff_ns") // conservamos LocationIDs si los quieres para trazabilidad
+val dfFinal = dfTaxisWithBoroughs.withColumn("pickup_ns", col("tpep_pickup_datetime").cast("long") * 1000000000L).withColumn("dropoff_ns", col("tpep_dropoff_datetime").cast("long") * 1000000000L).withColumn("ride_time", calculateTime(col("pickup_ns"), col("dropoff_ns"))).withColumn("Airport_charge", when(col("Airport_fee").isNull, lit(0)).otherwise(col("Airport_fee"))).filter(col("total_amount") > 0).drop("pickup_ns", "dropoff_ns") // conservamos LocationIDs si los quieres para trazabilidad
 
 
 
@@ -164,6 +155,11 @@ println(s"Número de carreras con duración mayor a 1 hora: $carrerasLargas")
 
 
 - Paso 10: Calcula la media de trip_distance por PUborough y payment_type ordenados por PUborough y payment_type
+//Error y tuve q hacer todo again
+
+val dfTaxis = spark.read.option("header", "true").option("inferSchema", "true").option("delimiter", ":").option("quote", "'").csv("hdfs://localhost:9000/data/taxis/yellow_tripdata_2024-01.csv")
+dfTaxis.select("total_amount", "trip_distance").show(10)
+val dfTaxisWithBoroughs = dfTaxis.join(dfZones.withColumnRenamed("LocationID", "PULocationID_zone").withColumnRenamed("borough", "PUborough"),dfTaxis("PULocationID") === col("PULocationID_zone"), "inner").join(dfZones.withColumnRenamed("LocationID", "DOLocationID_zone").withColumnRenamed("borough", "DOborough"),col("DOLocationID") === col("DOLocationID_zone"), "inner").drop("PULocationID_zone", "DOLocationID_zone") // elimina columnas extra
 
 
 - Paso 11: Calcula cuántos valores nulos hay por columna
@@ -185,3 +181,55 @@ println(s"Número de carreras con duración mayor a 1 hora: $carrerasLargas")
 
 
 - Paso 17: Evalúa el modelo obteniendo un resumen (LinearRegressionSummary) de acuerdo a los datos de testing, obten el coeficiente de determinación (R2) y explica si el modelo de regresión lineal es suficientemente preciso en función de dicho valor.
+
+
+
+import org.apache.spark.sql.functions._
+import org.apache.spark.ml.feature.{StringIndexer, VectorAssembler, OneHotEncoder}
+import org.apache.spark.ml.regression.LinearRegression
+import org.apache.spark.ml.Pipeline
+import org.apache.spark.sql.types._
+
+// Paso 11: Valores nulos por columna
+val dfPaso11 = dfTaxisWithBoroughs.columns.map(c => dfTaxisWithBoroughs.filter(col(c).isNull).count()).zip(dfTaxisWithBoroughs.columns).toSeq.toDF("null_count", "column")
+dfPaso11.show()
+
+// Paso 12: Correlación con total_amount para columnas numéricas
+val numericCols = dfTaxisWithBoroughs.schema.fields.collect {
+  case StructField(name, DoubleType | IntegerType | LongType, _, _) => name
+}.filter(_ != "total_amount")
+val dfPaso12 = numericCols.map(c => (c, dfTaxisWithBoroughs.stat.corr(c, "total_amount"))).toSeq.toDF("columna", "correlacion")
+dfPaso12.show()
+
+// Paso 13: Transformaciones MLlib
+val indexer = new StringIndexer().setInputCol("PUborough").setOutputCol("PUborough_index")
+val encoder = new OneHotEncoder().setInputCol("PUborough_index").setOutputCol("PUborough_vec")
+val assembler = new VectorAssembler()
+  .setInputCols(Array("trip_distance", "tolls_amount", "Airport_fee", "ride_time", "PUborough_vec"))
+  .setOutputCol("features")
+
+val pipeline = new Pipeline().setStages(Array(indexer, encoder, assembler))
+val dfPaso13 = pipeline.fit(dfTaxisWithBoroughs).transform(dfTaxisWithBoroughs)
+dfPaso13.select("features", "total_amount").show(false)
+
+// Paso 14: Split train/test
+val dfPaso14 = dfPaso13.select("features", "total_amount")
+val Array(dfTrain, dfTest) = dfPaso14.randomSplit(Array(0.7, 0.3), seed = 42)
+
+// Paso 15: Estadísticas
+println(s"Entrenamiento: ${dfTrain.count()} filas")
+dfTrain.describe("total_amount").show()
+println(s"Testing: ${dfTest.count()} filas")
+dfTest.describe("total_amount").show()
+
+// Paso 16: Modelo de regresión lineal
+val lr = new LinearRegression().setLabelCol("total_amount").setFeaturesCol("features")
+val modelo = lr.fit(dfTrain)
+val dfPredicciones = modelo.transform(dfTrain)
+val r2Train = modelo.summary.r2
+println(s"R2 entrenamiento: $r2Train")
+
+// Paso 17: Evaluación en test
+val evaluacion = modelo.evaluate(dfTest)
+val r2Test = evaluacion.r2
+println(s"R2 testing: $r2Test")
