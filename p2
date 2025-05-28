@@ -10,12 +10,35 @@ unix-shell> wget -P /home/bigdata/Descargas/ https://gist.githubusercontent.com/
 
 
 - Paso 2: Arranca HDFS y copia el fichero taxi_zones.json a la ruta /data/zones/ de HDFS y el fichero yellow_tripdata_2024-01.csv a la ruta /data/taxis/
+start-dfs.sh
+hdfs dfs -mkdir -p /data/zones
+hdfs dfs -mkdir -p /data/taxis
+
+hdfs dfs -put yellow_tripdata_2024-01.csv  /data/taxis
+hdfs dfs -put taxi_zones.json  /data/zones
 
 
 - Paso 3: Arranca la shell de Spark y genera un Dataframe que cargue los datos sobre taxis albergados en HDFS (incluye las opciones del datasource de csv que estimes oportunas tras haber realizado la exploración del fichero en el paso anterior):
+spark-shell
+
+val dfTaxis = spark.read.option("header", "true").option("inferSchema", "true").option("delimiter", ":").option("quote", "'").csv("hdfs://localhost:9000/data/taxis/yellow_tripdata_2024-01.csv")
+
+
+dfTaxis.show(5)
+dfTaxis.printSchema()
+
+val dfZones = spark.read.option("multiline", "true").json("hdfs://localhost:9000/data/zones/taxi_zones.json")
+
+   
 
 
 - Paso 4: ¿Cuántos registros tienen un total_amount menor o igual a 0?
+
+import org.apache.spark.sql.functions._
+
+val registrosInvalidos = dfTaxis.filter($"total_amount" <= 0)
+val cantidad = registrosInvalidos.count()
+println(s"Número de registros con total_amount <= 0: $cantidad")
 
 
 - Paso 5: Genera una UDF con el nombre calculateTime que obtenga la diferencia en segundos entre 2 timestamps expresados en nanosegundos. Estos timestamps realmente se tratan en Spark como un Long, por lo que la UDF deberá recibir dos variables de tipo Long (ambos timestamps en nanonsegundos) y devolver un Long (diferencia en segundos):
