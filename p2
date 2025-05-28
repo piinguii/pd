@@ -166,6 +166,7 @@ dfTaxisWithBoroughs.show(10, truncate = false)
 val dfFinal = dfTaxisWithBoroughs.withColumn("pickup_ns", col("tpep_pickup_datetime").cast("long") * 1000000000L).withColumn("dropoff_ns", col("tpep_dropoff_datetime").cast("long") * 1000000000L).withColumn("ride_time", calculateTime(col("pickup_ns"), col("dropoff_ns"))).withColumn("Airport_charge", when(col("Airport_fee").isNull, lit(0)).otherwise(col("Airport_fee"))).filter(col("total_amount") > 0).drop("pickup_ns", "dropoff_ns") // conservamos LocationIDs si los quieres para trazabilidad
 dfTaxisWithBoroughs.groupBy("PUborough", "payment_type").agg(avg("trip_distance").alias("avg_trip_distance")).orderBy("PUborough", "payment_type").show()
 
+dfTaxis.join(dfZones.withColumn("LocationID", col("LocationID").cast("int")).withColumnRenamed("LocationID", "PULocationID").withColumnRenamed("borough", "PUborough"), Seq("PULocationID"), "inner").groupBy("PUborough", "payment_type").agg(avg("trip_distance").alias("avg_trip_distance")).orderBy("PUborough", "payment_type").show()
 
 
 - Paso 11: Calcula cuántos valores nulos hay por columna
