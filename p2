@@ -27,7 +27,6 @@ val dfTaxis = spark.read.option("header", "true").option("inferSchema", "true").
 dfTaxis.show(5)
 dfTaxis.printSchema()
 
-val dfZones = spark.read.option("multiline", "true").json("hdfs://localhost:9000/data/zones/taxi_zones.json")
 
    
 
@@ -43,6 +42,15 @@ println(s"Número de registros con total_amount <= 0: $cantidad")
 
 - Paso 5: Genera una UDF con el nombre calculateTime que obtenga la diferencia en segundos entre 2 timestamps expresados en nanosegundos. Estos timestamps realmente se tratan en Spark como un Long, por lo que la UDF deberá recibir dos variables de tipo Long (ambos timestamps en nanonsegundos) y devolver un Long (diferencia en segundos):
 
+import org.apache.spark.sql.functions.udf
+
+
+
+val calculateTime = udf((start: Long, end: Long) => {
+  (end - start) / 1000000000L
+})
+
+
 
 - Paso 6: Genera un Dataframe partiendo del Dataframe del paso 3 con las siguientes operaciones:
 
@@ -55,7 +63,21 @@ println(s"Número de registros con total_amount <= 0: $cantidad")
 * Elimina la columna LocationID del Dataframe resultante
 
 
+import org.apache.spark.sql.functions._
+
+
+val dfTaxisFinal = dfTaxis
+  .withColumn("pickup_ns", col("tpep_pickup_datetime").cast("long") * 1000000000L)
+  .withColumn("dropoff_ns", col("tpep_dropoff_datetime").cast("long") * 1000000000L)
+  .withColumn("ride_time", calculateTime(col("pickup_ns"), col("dropoff_ns")))
+  .withColumn("Airport_charge", when(col("Airport_fee").isNull, lit(0)).otherwise(col("Airport_fee")))
+  .filter(col("total_amount") > 0)
+  .drop("PULocationID", "DOLocationID", "pickup_ns", "dropoff_ns")
+
+
 - Paso 7: Genera un nuevo Dataframe desde 0 que cargue los datos sobre zonas de NYC albergados en HDFS:
+
+val dfZones = spark.read.option("multiline", "true").json("hdfs://localhost:9000/data/zones/taxi_zones.json")
 
 
 - Paso 8: Genera un Dataframe partiendo del Dataframe del paso 6 con las siguientes operaciones:
@@ -66,8 +88,79 @@ println(s"Número de registros con total_amount <= 0: $cantidad")
 
 * Elimina la columna LocationID del Dataframe resultante
 
+import org.apache.spark.sql.functions._
+
+// Join para obtener PUborough
+val dfWithPU = dfTaxis
+  .join(dfZones.withColumnRenamed("LocationID", "PULocationID_zone")
+               .withColumnRenamed("borough", "PUborough"),
+        dfTaxis("PULocationID") === col("PULocationID_zone"),
+        "inner"
+  )
+
+// Join para obtener DOborough
+val dfWithDO = dfWithPU
+  .join(dfZones.withColumnRenamed("LocationID", "DOLocationID_zone")
+               .withColumnRenamed("borough", "DOborough"),
+        dfWithPU("DOLocationID") === col("DOLocationID_zone"),
+        "inner"
+  )
+
+// Eliminamos columnas de LocationID temporales del join
+val dfTaxisBoroughs = dfWithDO
+  .drop("PULocationID_zone", "DOLocationID_zone")
+
+
+
+//Lo de antes no esta bien; es lo siguiente
+
+val dfTaxisWithBoroughs = dfTaxis
+  .join(dfZones.withColumnRenamed("LocationID", "PULocationID_zone")
+               .withColumnRenamed("borough", "PUborough"),
+        dfTaxis("PULocationID") === col("PULocationID_zone"), "inner")
+  .join(dfZones.withColumnRenamed("LocationID", "DOLocationID_zone")
+               .withColumnRenamed("borough", "DOborough"),
+        col("DOLocationID") === col("DOLocationID_zone"), "inner")
+  .drop("PULocationID_zone", "DOLocationID_zone") // elimina columnas extra
+
+
+//Verificar
+
+dfTaxisBoroughs.select("PULocationID", "PUborough", "DOLocationID", "DOborough").show(10, truncate = false)
+dfTaxisBoroughs.printSchema()
+
+
+
+//No se si puede ser algo asi por lo del datafram del paso 6
+
+import org.apache.spark.sql.functions._
+
+// UDF del paso 5
+val calculateTime = udf((start: Long, end: Long) => (end - start) / 1000000000L)
+
+
+// Aplicar transformaciones del paso 6
+val dfFinal = dfTaxisWithBoroughs.withColumn("pickup_ns", col("tpep_pickup_datetime").cast("long") * 1000000000L).withColumn("dropoff_ns", col("tpep_dropoff_datetime").cast("long") * 1000000000L).withColumn("ride_time", calculateTime(col("pickup_ns"), col("dropoff_ns")))
+  .withColumn("Airport_charge", when(col("Airport_fee").isNull, lit(0)).otherwise(col("Airport_fee")))
+  .filter(col("total_amount") > 0)
+  .drop("pickup_ns", "dropoff_ns") // conservamos LocationIDs si los quieres para trazabilidad
+
+
 
 - Paso 9: ¿Cuál es la suma total y cuál es el máximo de la columna total_amount? ¿Cuántas carreras duraron más de 1 hora?
+
+import org.apache.spark.sql.functions._
+
+// 1. Suma total y 2. valor máximo de total_amount
+dfFinal.agg(
+  sum("total_amount").as("suma_total"),
+  max("total_amount").as("maximo_total")
+).show()
+
+// 3. Número de carreras con duración mayor a 1 hora
+val carrerasLargas = dfFinal.filter(col("ride_time") > 3600).count()
+println(s"Número de carreras con duración mayor a 1 hora: $carrerasLargas")
+
 
 
 - Paso 10: Calcula la media de trip_distance por PUborough y payment_type ordenados por PUborough y payment_type
