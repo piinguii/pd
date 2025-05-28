@@ -1,0 +1,71 @@
+En este ejercicio, vamos a utilizar datos sobre las carreras de los taxis amarillos de Nueva York en Enero de 2024 (se incluye un documento PDF con el diccionario de los metadatos). Además, se usará otro fichero de datos con información sobre los barrios de NYC. El comando o código utilizado (TODOS los PASOS realizados con Spark en este ejercicio, deben ser resueltos con la API de Dataframe, es decir, no se puede utilizar el método spark.sql para lanzar sentencias SQL) en cada paso debe ser incluído en formato texto en el campo de respuesta de la pregunta de Blackboard como solución final:
+
+
+- Paso 1: Descargar ficheros de datos (No requiere incluir los comandos en la solución final) y explora el contenido del fichero csv (por ejemplo, con el comando head) 
+
+
+unix-shell> wget -P /home/bigdata/Descargas/ https://gist.githubusercontent.com/mafernandez-stratio/e4a3d3f0c4790989201b2c4af3daa1a1/raw/a983fcf3d1f7beb274c1c792add8a00bb968a5f2/taxi_zones.json
+
+unix-shell> wget -P /home/bigdata/Descargas/ https://gist.githubusercontent.com/mafernandez-stratio/ffc511cfcc5b1c4b260523127689e24b/raw/6bae4169c89c49adb6ec6c09426af2226290d493/yellow_tripdata_2024-01.csv
+
+
+- Paso 2: Arranca HDFS y copia el fichero taxi_zones.json a la ruta /data/zones/ de HDFS y el fichero yellow_tripdata_2024-01.csv a la ruta /data/taxis/
+
+
+- Paso 3: Arranca la shell de Spark y genera un Dataframe que cargue los datos sobre taxis albergados en HDFS (incluye las opciones del datasource de csv que estimes oportunas tras haber realizado la exploración del fichero en el paso anterior):
+
+
+- Paso 4: ¿Cuántos registros tienen un total_amount menor o igual a 0?
+
+
+- Paso 5: Genera una UDF con el nombre calculateTime que obtenga la diferencia en segundos entre 2 timestamps expresados en nanosegundos. Estos timestamps realmente se tratan en Spark como un Long, por lo que la UDF deberá recibir dos variables de tipo Long (ambos timestamps en nanonsegundos) y devolver un Long (diferencia en segundos):
+
+
+- Paso 6: Genera un Dataframe partiendo del Dataframe del paso 3 con las siguientes operaciones:
+
+* Nueva columna ride_time resultado de ejecutar la UDF calculateTimeUDF sbre las columnas tpep_pickup_datetime y tpep_dropoff_datetime
+
+* Nueva columna Airport_charge que tenga el valor 0 si el valor de la columna Airport_fee es nulo o el propio valor de Airport_fee en caso contrario
+
+* Filtrar las filas que tengan un total_amount mayor que 0, es decir, descartar aquellas filas cuyo total_amount sea 0 o negativo
+
+* Elimina la columna LocationID del Dataframe resultante
+
+
+- Paso 7: Genera un nuevo Dataframe desde 0 que cargue los datos sobre zonas de NYC albergados en HDFS:
+
+
+- Paso 8: Genera un Dataframe partiendo del Dataframe del paso 6 con las siguientes operaciones:
+
+* Nueva columna PUborough (correspondiente a la columna borough de zonas) generada de un inner join entre las columnas PULocationID de taxis y LocationID de zonas
+
+* Nueva columna DOborough (correspondiente a la columna borough de zonas) generada de un inner join entre las columnas DOLocationID de taxis y LocationID de zonas
+
+* Elimina la columna LocationID del Dataframe resultante
+
+
+- Paso 9: ¿Cuál es la suma total y cuál es el máximo de la columna total_amount? ¿Cuántas carreras duraron más de 1 hora?
+
+
+- Paso 10: Calcula la media de trip_distance por PUborough y payment_type ordenados por PUborough y payment_type
+
+
+- Paso 11: Calcula cuántos valores nulos hay por columna
+
+
+- Paso 12: Obten una lista de nombres de columnas del Dataframe del paso 8 que sean de tipo numéricas (integer, double y long) y calcula la correlación entre estas columnas y la columna total_amount
+
+
+- Paso 13: Genera un Dataframe que realice cuatro transformaciones con SparK MLlib sobre el Dataframe del paso 8 como paso previo a generar una Regresión Lineal sobre la columna total_amount basada en las columnas trip_distance, tolls_amount, Airport_charge, ride_time, PUborough (NOTA: PUborough incialmente es una columna de tipo String)
+
+
+- Paso 14: Genera un Dataframe que contenga solo las columnas total_amount y la columna del vector de características calculado en el paso anterior. A partir de este Dataframe, genera un Dataframe de datos de entrenamiento (70%) y un Dataframe de datos de testing (30%).
+
+
+- Paso 15: ¿Cuántas filas tiene cada Dataframe generado en el paso anterior? Lanza también un comando sobre cada Dataframe para obtener count, mean, stddev, min y max de la columna total_amount
+
+
+- Paso 16: Genera un modelo y un Dataframe con predicciones de una regresión lineal a partir del Dataframe de entrenamiento. Obten el coeficiente de determinación (R2) y explica si el modelo de regresión lineal es suficientemente preciso en función de dicho valor. 
+
+
+- Paso 17: Evalúa el modelo obteniendo un resumen (LinearRegressionSummary) de acuerdo a los datos de testing, obten el coeficiente de determinación (R2) y explica si el modelo de regresión lineal es suficientemente preciso en función de dicho valor.
