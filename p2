@@ -156,7 +156,7 @@ println(s"Número de carreras con duración mayor a 1 hora: $carrerasLargas")
 
 - Paso 10: Calcula la media de trip_distance por PUborough y payment_type ordenados por PUborough y payment_type
 //Error y tuve q hacer todo again
-
+val dfZones = spark.read.option("multiline", "false").json("hdfs://localhost:9000/data/zones/taxi_zones.json")
 val dfTaxis = spark.read.option("header", "true").option("inferSchema", "true").option("delimiter", ":").option("quote", "'").csv("hdfs://localhost:9000/data/taxis/yellow_tripdata_2024-01.csv")
 dfTaxis.select("total_amount", "trip_distance").show(10)
 val dfZonesCasted = dfZones.withColumn("LocationID", col("LocationID").cast("int"))
