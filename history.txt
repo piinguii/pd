@@ -1,0 +1,272 @@
+    1  sudo apt-get update
+    2  apt-get update
+    3  sudo apt-get update
+    4  sudo apt-get upgrade
+    5  exit
+    6  sudo su -
+    7  usermod -aG sudo bigdata
+    8  sudo usermod -aG sudo bigdata
+    9  sudo su -
+   10  vi /etc/sudoers
+   11  sudo vi /etc/sudoers
+   12  sudo su
+   13  cd /root/
+   14  sudo su root
+   15  cat /etc/group
+   16  su root
+   17  sudo apt-get update
+   18  exit
+   19  sudo apt-get update
+   20  sudo apt-get upgrade
+   21  sudo apt autoremove
+   22  sudo reboot
+   23  sudo apt-get update
+   24  sudo apt-get upgrade
+   25  ./VBoxLinuxAdditions.run 
+   26  sudo su -
+   27  cd ~
+   28  ssh-keygen -t rsa -P '' -f ~/.ssh/id_rsa
+   29  cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
+   30  chmod 0600 ~/.ssh/authorized_keys 
+   31  sudo apt-get install openjdk-8-jdk
+   32  sudo apt install build-essential dkms linux-headers-$(uname -r) module-assistant
+   33  sudp apt install gcc
+   34  sudo apt install gcc
+   35  sudo apt-get clean
+   36  exit
+   37  sudo su -
+   38  exit
+   39  cd Descargas/
+   40  wget https://dlcdn.apache.org/hadoop/common/hadoop-3.3.6/hadoop-3.3.6.tar.gz
+   41  sudo apt install curl tar
+   42  sudo apt-get clean
+   43  sudo apt autoremove
+   44  cd ..
+   45  mv Descargas/hadoop-3.3.6.tar.gz .
+   46  tar -zxvf hadoop-3.3.6.tar.gz 
+   47  rm hadoop-3.3.6.tar.gz 
+   48  cd hadoop-3.3.6/
+   49  sudo apt-get install ssh pdsh
+   50  echo $JAVA_HOME
+   51  ll /usr/lib/jvm/java-8-openjdk-amd64/
+   52  echo 'export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64' >> ~/.bashrc
+   53  source ~/.bashrc
+   54  vi ~/.profile 
+   55  echo 'export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64' >> ~/.profile 
+   56  echo 'export PDSH_RCMD_TYPE=ssh' >> ~/.profile 
+   57  echo 'export CONFLUENT_HOME=/home/bigdata/confluent-7.5.1' >> ~/.profile 
+   58  echo 'export HIVE_HOME=/home/bigdata/apache-hive-3.1.3-bin' >> ~/.profile 
+   59  echo 'export HADOOP_HOME=/home/bigdata/hadoop-3.3.6' >> ~/.profile 
+   60  echo 'export PATH=$PATH:$CONFLUENT_HOME/bin' >> ~/.profile 
+   61  echo 'export PATH=$HIVE_HOME/bin:$PATH' >> ~/.profile 
+   62  cat ~/.profile 
+   63  cat ~/.bashrc 
+   64  echo 'export PDSH_RCMD_TYPE=ssh' >> ~/.bashrc 
+   65  echo 'export CONFLUENT_HOME=/home/bigdata/confluent-7.5.1' >> ~/.bashrc 
+   66  echo 'export HIVE_HOME=/home/bigdata/apache-hive-3.1.3-bin' >> ~/.bashrc 
+   67  echo 'export HADOOP_HOME=/home/bigdata/hadoop-3.3.6' >> ~/.bashrc 
+   68  echo 'export PATH=$PATH:$CONFLUENT_HOME/bin' >> ~/.bashrc 
+   69  echo 'export PATH=$HIVE_HOME/bin:$PATH' >> ~/.bashrc 
+   70  echo 'export HISTSIZE=10000' >> ~/.bashrc 
+   71  echo 'export HISTFILESIZE=10000' >> ~/.bashrc 
+   72  cat ~/.bashrc 
+   73  vi etc/hadoop/core-site.xml 
+   74  sudo apt-get install vim
+   75  vim etc/hadoop/core-site.xml 
+   76  vim etc/hadoop/hdfs-site.xml 
+   77  ssh localhost
+   78  bin/hdfs namenode -format
+   79  sbin/start-dfs.sh
+   80  pdsh -q -w localhost
+   81  sbin/start-dfs.sh
+   82  jps
+   83  sudo reboot
+   84  cd hadoop-3.3.6/
+   85  sbin/start-dfs.sh 
+   86  jps
+   87  cat etc/hadoop/hadoop-env.sh | grep JAVA
+   88  vim etc/hadoop/hadoop-env.sh 
+   89  sbin/start-dfs.sh 
+   90  vim etc/hadoop/hadoop-env.sh 
+   91  sbin/start-dfs.sh 
+   92  echo $HADOOP_HOME
+   93  sudo reboot
+   94  cd hadoop-3.3.6/
+   95  sbin/start-dfs.sh 
+   96  grep -Rnw '.' -e 'HADOOP_COMMON_HOME'
+   97  grep -Rnw etc/ -e 'HADOOP_COMMON_HOME'
+   98  grep -Rnw 'etc/' -e 'HADOOP_COMMON_HOME'
+   99  sbin/start-dfs.sh 
+  100  export HADOOP_HDFS_HOME=$HADOOP_HOME
+  101  sbin/start-dfs.sh 
+  102  echo $HADOOP_COMMON_HOME
+  103  pwd
+  104  echo 'export HADOOP_COMMON_HOME=/home/bigdata/hadoop-3.3.6' >> ~/.bashrc 
+  105  echo 'export HADOOP_COMMON_HOME=/home/bigdata/hadoop-3.3.6' >> ~/.profile 
+  106  source ~/.bashrc 
+  107  source ~/.profile 
+  108  sbin/start-dfs.sh 
+  109  vim etc/hadoop/hadoop-env.sh 
+  110  vim ~/.profile 
+  111  vim ~/.bashrc 
+  112  source ~/.profile 
+  113  source ~/.bashrc 
+  114  sbin/start-dfs.sh 
+  115  jps
+  116  bin/hdfs dfs -ls /
+  117  sbin/stop-dfs.sh 
+  118  cd ..
+  119  wget https://dlcdn.apache.org/nifi/1.23.2/nifi-1.23.2-bin.zip
+  120  sudo apt-get install unzip
+  121  wget https://apache.root.lu/nifi/1.23.2/nifi-1.23.2-bin.zip
+  122  unzip nifi-1.23.2-bin.zip 
+  123  sudo shutdown                    -h now
+  124  cd ..
+  125  cd hadoop-3.3.6/
+  126  bin/hadoop dfs -mkdir       /tmp
+  127  bin/hdfs dfs -mkdir       /user/hive/warehouse
+  128  bin/hdfs dfs -mkdir  -r      /user/hive/warehouse
+  129  bin/hdfs dfs -mkdir  -p      /user/hive/warehouse
+  130  bin/hdfs dfs -chmod g+w   /tmp
+  131  bin/hdfs dfs -chmod g+w   /user/hive/warehouse
+  132  bin/hadoop dfs -mkdir       /tmp
+  133  bin/hdfs dfs -mkdir  -p      /user/hive/warehouse
+  134  bin/hdfs dfs -chmod g+w   /tmp
+  135  bin/hdfs dfs -chmod g+w   /user/hive/warehouse
+  136  exit
+  137  history
+  138  rm nifi-1.23.2-bin.zip 
+  139  cd nifi-1.23.2/
+  140  bin/nifi.sh start
+  141  grep Generated logs/nifi-app.log 
+  142  bin/nifi.sh stop
+  143  ./bin/nifi.sh set-single-user-credentials bigdata bigdata123456
+  144  bin/nifi.sh start
+  145  bin/nifi.sh stop
+  146  cd ..
+  147  sudo apt-get install wget curl
+  148  curl -O https://packages.confluent.io/archive/7.5/confluent-7.5.1.zip
+  149  unzip confluent-7.5.1.zip 
+  150  rm confluent-7.5.1.zip 
+  151  cd confluent-7.5.1/
+  152  cat ~/.bashrc | grep CONFLUENT_HOME
+  153  cat ~/.profile | grep CONFLUENT_HOME
+  154  confluent local services start
+  155  confluent local services stop
+  156  cd ..
+  157  wget https://dlcdn.apache.org/hive/hive-3.1.3/apache-hive-3.1.3-bin.tar.gz
+  158  tar -zxvf apache-hive-3.1.3-bin.tar.gz
+  159  rm apache-hive-3.1.3-bin.tar.gz
+  160  df -h
+  161  cd hadoop-3.3.6/
+  162  sbin/start-dfs.sh 
+  163  cd ../apache-hive-3.1.3-bin/
+  164  cat ~/.profile | grep HADOOP
+  165  cat ~/.bashrc | grep HADOOP
+  166  bin/hive
+  167  bin/beeline
+  168  bin/hiveserver2
+  169  jps
+  170  cd ~/hadoop-3.3.6/
+  171  bin/hadoop dfs -mkdir       /tmp
+  172  bin/hdfs dfs -mkdir  -p      /user/hive/warehouse
+  173  bin/hdfs dfs -chmod g+w   /tmp
+  174  bin/hdfs dfs -chmod g+w   /user/hive/warehous
+  175  bin/hdfs dfs -chmod g+w   /user/hive/warehouse
+  176  cd ../apache-hive-3.1.3-bin/
+  177  bin/schematool -dbType derby -initSchema
+  178  bin/schematool --verbose  -dbType derby -initSchema
+  179  bin/schematool --verbose  -dbType derby
+  180  bin/schematool --verbose  -dbType derby -initSchema -ifnotExists
+  181  bin/schematool --verbose  -dbType derby -ifnotExists
+  182  bin/schematool --verbose  -dbType derby -validate
+  183  bin/schematool --verbose  -dbType derby -upgradeSchema
+  184  bin/schematool --verbose  -dbType derby -initSchema
+  185  bin/hiveserver2 status
+  186  bin/schematool --verbose  -dbType derby -initSchema
+  187  jps
+  188  ll scripts/metastore/upgrade/
+  189  cp scripts/metastore/upgrade/derby/hive-schema-3.1.0.derby.sql scripts/metastore/upgrade/derby/hive-schema-3.1.0.derby.sql.backup
+  190  cp ~/Descargas/hive-schema-3.1.0.derby.sql scripts/metastore/upgrade/derby/hive-schema-3.1.0.derby.sql
+  191  bin/schematool --verbose  -dbType derby -initSchema
+  192  bin/hiveserver2
+  193  export HADOOP_HOME=/home/bigdata/hadoop-3.3.6
+  194  ll /home/bigdata/hadoop-3.3.6
+  195  bin/hiveserver2 status
+  196  bin/beeline -u jdbc:hive2://
+  197  bin/schematool --verbose  -dbType derby -initSchema
+  198  bin/schematool --verbose  -dbType derby
+  199  tail derby.log 
+  200  bin/schematool --verbose  -dbType derby -validate
+  201  bin/schematool --verbose  -dbType
+  202  bin/schematool --verbose  -dbType derby -initSchema
+  203  bin/schematool --verbose  -dbType derby -upgradeSchema
+  204  cd ..
+  205  grep -Rnw '.' -e 'derby'
+  206  cd apache-hive-3.1.3-bin/
+  207  grep -Rnw '.' -e 'derby'
+  208  rm -rf ./derby.log 
+  209  bin/schematool --verbose  -dbType derby -initSchema
+  210  bin/schematool --verbose  -dbType derby 
+  211  bin/schematool --verbose  -dbType derby -initSchemaTo 3.1.0
+  212  java org.apache.derby.tools.ij
+  213  grep -Rnw '.' -e 'derby'
+  214  cd ..
+  215  rm -rf apache-hive-3.1.3-bin/
+  216  wget https://dlcdn.apache.org/hive/hive-3.1.3/apache-hive-3.1.3-bin.tar.gz
+  217  tar -zxvf apache-hive-3.1.3-bin.tar.gz
+  218  rm apache-hive-3.1.3-bin.tar.gz 
+  219  jps
+  220  cd ../apache-hive-3.1.3-bin/
+  221  cd apache-hive-3.1.3-bin/
+  222  echo $HADOOP_HOME
+  223  cp ~/Descargas/hive-schema-3.1.0.derby.sql scripts/metastore/upgrade/derby/hive-schema-3.1.0.derby.sql
+  224  bin/schematool --verbose  -dbType derby -initSchema
+  225  bin/hiveserver2 status
+  226  bin/beeline -u jdbc:hive2://
+  227  jps
+  228  cd ../hadoop-3.3.6/
+  229  sbin/stop-dfs.sh 
+  230  jps
+  231  exit
+  232  wget https://archive.apache.org/dist/spark/spark-3.3.3/spark-3.3.3-bin-hadoop3.tgz
+  233  tar -zxvf spark-3.3.3-bin-hadoop3.tgz
+  234  rm spark-3.3.3-bin-hadoop3.tgz
+  235  cd spark-3.3.3-bin-hadoop3/
+  236  bin/spark-shell
+  237  cd ../apache-hive-3.1.3-bin/
+  238  bin/beeline -u jdbc:hive2://
+  239  cd ../hadoop-3.3.6/
+  240  sbin/start-dfs.sh 
+  241  cd ../apache-hive-3.1.3-bin/
+  242  bin/beeline -u jdbc:hive2://
+  243  cd ../confluent-7.5.1/
+  244  bin/confluent-hub install confluentinc/kafka-connect-hdfs3:1.1.26
+  245  sudo apt-get install terminator
+  246  bin/confluent-hub install confluentinc/kafka-connect-hdfs3:1.1.26
+  247  jps
+  248  cd ../
+  249  cd hadoop-3.3.6/
+  250  sbin/stop-dfs.sh 
+  251  sudo usermod -aG vboxsf bigdata
+  252  exit
+  253  ll /mnt/vboxshared1/
+  254  cp /mnt/vboxshared1/microcuento.txt .
+  255  ll /mnt/vboxshared1/Home-Descargas/
+  256  ll /mnt/vboxshared1/Home-Descargas/home/
+  257  ll /mnt/vboxshared1/Home-Descargas/home/bigdata/
+  258  ll /mnt/vboxshared1/Home-Descargas/home/bigdata/Descargas/
+  259  cp -t /mnt/vboxshared1/Home-Descargas/home/bigdata/Descargas/* ~/Descargas/
+  260  cp -r /mnt/vboxshared1/Home-Descargas/home/bigdata/Descargas/* ~/Descargas/
+  261  ll Descargas/
+  262  mkdir test
+  263  ls
+  264  cp -r /mnt/vboxshared1/Home-test/home/bigdata/test/* test/
+  265  ll test/
+  266  ll test/titanic/
+  267  exit
+  268  ll
+  269  ls
+  270  ll /mnt/
+  271  exit
+  272  history 10000 >> /tmp/history
