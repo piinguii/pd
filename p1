@@ -1,0 +1,80 @@
+En este ejercicio, vamos a utilizar datos desestrucutados sobre tweets de temática financiera para convertirlos en datos estructurados, analizarlos y volcar ciertos datos sobre un sink de Streaming (topic de Kafka). El comando o código (se especificará si deberá responder con la API de Dataframe o con sentencias spark.sql) utilizado en cada paso debe ser incluído en formato texto en el campo de respuesta de la pregunta de Blackboard como solución final:
+
+
+- Paso 1: Descargar el fichero de datos (No requiere incluir los comandos en la solución final) y explora el contenido de dicho fichero (por ejemplo, con el comando head). 
+
+
+NOTA: Aunque los datos cumplen el siguiente formato: <texto-tweet> _AT_ <timestamp-tweet> _FROM_ <user-twitter> _WITH_VERIFICATION_ [True|False], se deberán tratar incialmente como datos desestructurados
+
+
+unix-shell> wget -P /home/bigdata/Descargas/ https://gist.githubusercontent.com/mafernandez-stratio/904c6085de256a5227c739ebff54ad12/raw/2a979108404a3f4e24f6437864da6bdb6ae5a562/tweets.txt
+
+
+- Paso 2: Arranca HDFS y copia el fichero tweets.txt a la ruta /data/tweets/ de HDFS
+cd hadoop
+start-dfs.sh
+jps
+hdfs dfs -mkdir -p /data/tweets
+hdfs dfs -put tweets.txt /data/tweets/
+hdfs dfs -ls /data/tweets/
+
+
+
+- Paso 3: Arranca la shell de Spark con la dependencia del conector de Kafka (--packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.3.3) y genera un RDD que cargue las líneas de los datos sobre tweets albergados en HDFS
+cd spark
+spark-shell --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.3.3
+
+//spark
+val rdd = sc.textFile("hdfs://localhost:9000/data/tweets/tweets.txt")
+
+
+- Paso 4: Convierte este RDD en un Dataframe con la siguiente estructura -> text: String, timestamp: Long, profile: String, verified: Boolean
+
+case class Tweet(text: String, timestamp: Long, profile: String, verified: Boolean)
+
+val parsedRDD = rdd.map { line =>
+  val parts1 = line.split("_AT_")
+  val text = parts1(0).trim
+  val parts2 = parts1(1).split("_FROM_")
+  val timestamp = parts2(0).trim.toLong
+  val parts3 = parts2(1).split("_WITH_VERIFICATION_")
+  val profile = parts3(0).trim
+  val verified = parts3(1).trim.toBoolean
+  Tweet(text, timestamp, profile, verified)
+}
+
+val df = spark.createDataFrame(parsedRDD)
+df.show(false)
+
+
+
+NOTA: Si tenemos la línea: "Mi contenido tweet _AT_ 1531949606 _FROM_ BigDataUser _WITH_VERIFICATION_ True", nuestro Dataframe contendrá una fila donde -> text="Mi contenido tweet", timestamp=1531949606, profile="BigDataUser" y verified=true
+
+
+- Paso 5: Create una TempView a partir de este Dataframe que se llame "tweets". Muestra el listado de tablas y una descripción de la vista creada en el catálogo de SparkSQL
+
+df.createOrReplaceTempView("tweets")
+
+
+- Paso 6: Responde con una sentencia SQL: ¿cuántos usarios distintos hay en la vista tweets?
+
+
+- Paso 7: Responde con una sentencia SQL: ¿cuáles son los 5 usuarios con más tweets?
+
+
+- Paso 8: Responde con una sentencia SQL: ¿cuáles son los 5 usuarios con un mayor rango de tiempo entre su tweet más antiguo y más moderno?
+
+
+NOTA: Si un usuario tiene 3 tweets en los datos con estos timestamps: 1532111000, 1533111000 y 1534111000; entonces su rango de tiempo será 1534111000 - 1532111000 = 2000000
+
+
+- Paso 9: Responde con una sentencia SQL: Create una tabla llamada verified_users en formato parquet que almacene sus datos en la ruta /data/verified/ de HDFS y que contenga 2 columnas: key (concatenación de las columnas profile y timestamp de la vista tweets) y value (columna text de la vista tweets) 
+
+
+- Paso 10: Inicia un servicio de Kafka (es decir, levantar un Broker de Kafka) y, posteriormente, una consola consumidor de Kafka del topic tweets, que pertenezca al consumer group grupo1, que imprima la clave de cada mensaje y que utilice el caracter : como separador entre la clave y el valor
+
+
+- Paso 11: Lee los datos de la tabla verified_users como una fuente de Streaming y vuelca su contenido en el topic tweets de Kafka
+
+
+- Paso 12: Recupera el objeto StreamingQuery de la query lanzada en el paso anterior para conseguir su estado, su último progreso y para parar dicha StreamingQuery
